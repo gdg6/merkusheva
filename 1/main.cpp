@@ -1,4 +1,4 @@
-//программа для подсчета кол-ва строк, непустых строк, однострочных и многострочных комментариев.
+//программа для подсчета кол-ва строк, непустых и пустых (даже пробела нет) строк, однострочных и многострочных комментариев.
 
 #include <iostream>
 #include <memory>
@@ -143,7 +143,7 @@ private:
 public: 
 	ProcessingData(CalculationLines * machine)
 	{
-		this->machine = machine;	
+		this ->machine = machine;	
 	}
 
 	void processData()
@@ -171,7 +171,7 @@ public:
 
 int main()
 {
-	CalculationLines * m = /* 8 
+	CalculationLines * m = /* 5
 				извращенный 
 				комментарий */ new CalculationLines();
 	
