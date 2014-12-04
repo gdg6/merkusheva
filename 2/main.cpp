@@ -24,10 +24,10 @@ class Machine
 		WHILE_STATE, 
 		FUNCTION_STATE,
 		CLASS_STATE,
-		WAIT_OPEN_SCOBAL,
+		WAIT_OPEN_SCOBAL, //фигурный скобки
 		WAIT_CLOSE_SCOBAL
 		WAIT_OPEN_CIRC_SCOBAL,
-		WAIT_close_CIRC_SCOBAL
+		WAIT_CLOSE_CIRC_SCOBAL
 	};
 	
 	//generals 
@@ -43,10 +43,33 @@ class Machine
 	enum {BEFORE_SPACE};
 	int state_help;
 	
+	
 	void checkOnFor(char c)
 	{
-		if(lenght_current_word > 3 && state_help == BEFORE_SPACE ) state
 	
+		if (lenght_current_word == 0 && c == 'f') {
+			lenght_current_word ++;
+			return;
+		}
+		
+		if (lenght_current_word == 1  && c == 'o') {
+			lenght_current_word ++;
+			return;
+		}
+		
+		if (lenght_current_word == 2 && C == 'r') {
+			lenght_current_word++;
+			return;
+		}
+
+		if (lenght_current_word == FOR_LENGHT && ( c != ' ' || c != '(') ) {
+			lenght_current_word = 0;
+			state = START_STATE;
+		} else {
+		     if (c == ' ') state = WAIT_OPEN_CIRC_SCOBAL;
+		     if (c == '(') state = WAIT_CLOSE_CIRC_SCOBAL;	
+		}
+		
 	}
 	
 public:
@@ -55,7 +78,11 @@ public:
 
 	void processState(char c)
 	{
-		
+		switch(this -> state) 
+		{
+			case START_STATE: 
+			break;
+		}
 	}
 	
 	int getMaxNestingLevel()
