@@ -4,11 +4,12 @@
 // и программа не предусмотренна на обработку кода в строке, вроде: "void func(){}"
 //и во входном листенге программы не учитываются комментарии. Т.к. не было сказано в задании.
 
+
 #include <iostream>
 #include <list>
 #include <algorithm>
 #include <vector>
-
+#include <cstdio>
 using std::cout;
 using std::endl;
 
@@ -25,21 +26,21 @@ class Machine
 		FUNCTION_STATE,
 		CLASS_STATE,
 		WAIT_OPEN_SCOBAL, //фигурный скобки
-		WAIT_CLOSE_SCOBAL
+		WAIT_CLOSE_SCOBAL,
 		WAIT_OPEN_CIRC_SCOBAL,
 		WAIT_CLOSE_CIRC_SCOBAL
 	};
 	
 	//generals 
-	int currentNestingLevel = 0;
-	int maxNestingLevel = 0;
+	int currentNestingLevel;
+	int maxNestingLevel;
 	int state;
 	//контейней для скобок условной архитектуры вложенности. 
 	std::vector<char> nestingScobals;
 	
 	//helpers
-	int lenght_current_word = 0;
-	char before_be_space = true;
+	int lenght_current_word;
+	char before_be_space;
 	enum {BEFORE_SPACE};
 	int state_help;
 	
@@ -57,16 +58,19 @@ class Machine
 			return;
 		}
 		
-		if (lenght_current_word == 2 && C == 'r') {
-			lenght_current_word++;
+		if (lenght_current_word == 2 && c == 'r') {
+			lenght_current_word ++;
 			return;
 		}
 
-		if (lenght_current_word == FOR_LENGHT && ( c != ' ' || c != '(') ) {
+		if (lenght_current_word == FOR_LENGHT && (c != ' ' || c != '(') ) {
 			lenght_current_word = 0;
 			state = START_STATE;
 		} else {
-		     if (c == ' ') state = WAIT_OPEN_CIRC_SCOBAL;
+		     if (c == ' ') {
+				state = WAIT_OPEN_CIRC_SCOBAL;
+				state_help = BEFORE_SPACE;
+			 }
 		     if (c == '(') state = WAIT_CLOSE_CIRC_SCOBAL;	
 		}
 		
@@ -74,13 +78,18 @@ class Machine
 	
 public:
 
-	Machine() : state(START_STATE){}
+	Machine() : currentNestingLevel(0), maxNestingLevel(0), 
+				state(START_STATE), lenght_current_word(0),
+				before_be_space(true) 
+	{
+	}
 
 	void processState(char c)
 	{
 		switch(this -> state) 
 		{
 			case START_STATE: 
+				if(c == 'i') state = FOR_STATE;
 			break;
 		}
 	}
