@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <cstdio>
+
 using std::cout;
 using std::endl;
 
@@ -62,10 +63,10 @@ class Machine
 			lenght_current_word ++;
 			return;
 		}
-
+		// если уже нашли подстроку проверка что это не часть слова.
 		if (lenght_current_word == FOR_LENGHT && (c != ' ' || c != '(') ) {
 			lenght_current_word = 0;
-			state = START_STATE;
+			state = START_STATE; //maybe oldstate
 		} else {
 		     if (c == ' ') {
 				state = WAIT_OPEN_CIRC_SCOBAL;
@@ -90,7 +91,15 @@ public:
 		{
 			case START_STATE: 
 				if(c == 'i') state = FOR_STATE;
-			break;
+				break;
+			case WAIT_CLOSE_CIRC_SCOBAL:
+				if(c == ')') state = WAIT_OPEN_SCOBAL;
+				break;
+			case WAIT_OPEN_SCOBAL:
+				if(c == ' ') break; //встретили пробел ничего не делаем. 
+				//обработка типа: for(int a = 0; a < n; a++); 
+				if (c == ';') 
+				
 		}
 	}
 	
