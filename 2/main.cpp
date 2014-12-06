@@ -14,7 +14,14 @@
 using std::cout;
 using std::endl;
 
+//lenght key words
 #define FOR_LENGHT 3
+#define WHILE_LENGHT 5
+#define DO_LENGHT 2
+#define IF_LENGHT 2
+#define SWITCH_LENGHT 6
+#define CLASS_LENGHT 5
+#define ENUM_LENGH 4
 
 class Machine
 {
@@ -33,7 +40,6 @@ class Machine
 	};
 	
 	//generals 
-	int currentNestingLevel;
 	int maxNestingLevel;
 	int state;
 	//контейней для скобок условной архитектуры вложенности. 
@@ -48,22 +54,20 @@ class Machine
 	
 	void checkOnFor(char c)
 	{
+		char word []  = "for";
+		
+		if(lenght_current_word > FOR_LENGHT) {
+			state = START_STATE;
+			return; //exception
+		}
 	
-		if (lenght_current_word == 0 && c == 'f') {
+		if (word[lenght_current_word] == c && 
+			FOR_LENGHT > lenght_current_word) {
 			lenght_current_word ++;
 			return;
 		}
-		
-		if (lenght_current_word == 1  && c == 'o') {
-			lenght_current_word ++;
-			return;
-		}
-		
-		if (lenght_current_word == 2 && c == 'r') {
-			lenght_current_word ++;
-			return;
-		}
-		// если уже нашли подстроку проверка что это не часть слова.
+	
+		// если уже нашли подстроку, проверка что это не часть слова.
 		if (lenght_current_word == FOR_LENGHT && (c != ' ' || c != '(') ) {
 			lenght_current_word = 0;
 			state = START_STATE; //maybe oldstate
@@ -77,9 +81,25 @@ class Machine
 		
 	}
 	
+	void pushOpenScobal()
+	{
+		nestingScobals.push_back('{');
+	}
+	
+	void pushCloseScobal()
+	{
+		nestingScobals.push_back('{');
+	}
+	
+	void pushScobals()
+	{
+		pushOpenScobal();
+		pushCloseScobal();
+	}
+	
 public:
 
-	Machine() : currentNestingLevel(0), maxNestingLevel(0), 
+	Machine() : maxNestingLevel(0), 
 				state(START_STATE), lenght_current_word(0),
 				before_be_space(true) 
 	{
@@ -90,7 +110,10 @@ public:
 		switch(this -> state) 
 		{
 			case START_STATE: 
-				if(c == 'i') state = FOR_STATE;
+				if(c == 'f') { state = FOR_STATE; checkOnFor(c); break;}
+				break;
+			case FOR_STATE: 
+				checkOnFor(c);
 				break;
 			case WAIT_CLOSE_CIRC_SCOBAL:
 				if(c == ')') state = WAIT_OPEN_SCOBAL;
@@ -98,9 +121,29 @@ public:
 			case WAIT_OPEN_SCOBAL:
 				if(c == ' ') break; //встретили пробел ничего не делаем. 
 				//обработка типа: for(int a = 0; a < n; a++); 
-				if (c == ';') 
+				if (c == ';') {pushScobals(); state = START_STATE; break;}
+				// обработка типа for(...) 
+				//                    while(...) ...
+				// и               for (...) {
+				//                     while(...) { ...
+				pushOpenScobal();
+				state = WAIT_CLOSE_SCOBAL; 
+				break;
 				
 		}
+	}
+	
+	void postProcessing()
+	{
+		int currentNestingLevel = 0;
+		int max = 0;
+		//stupid way
+		for(unsigned int i = 0; i < nestingScobals.size(); i++) {
+			if(nestingScobals.at(i) == '{') currentNestingLevel++;
+			if(max < currentNestingLevel) max = currentNestingLevel;
+			if(nestingScobals.at(i) == '}') currentNestingLevel--;
+		} 
+		this -> maxNestingLevel = max;
 	}
 	
 	int getMaxNestingLevel()
@@ -120,6 +163,7 @@ public:
 		{
 			machine.processState(c);
 		}
+		machine.postProcessing();
 	}
 
 	void printStatistic()
