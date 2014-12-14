@@ -25,11 +25,11 @@ using std::endl;
 #define ENUM_LENGHT 4
 
 #define INT_LENGHT 3
+#define CHAR_LENGHT 4
 #define VOID_LENGHT 4
 #define FLOAT_LENGHT 5
 #define DOUBLE_LENGHT 6
 #define SHORT_LENGHT 5
-
 
 class Machine
 {
@@ -44,6 +44,8 @@ class Machine
 		VOID_STATE, 
 		DOUBLE_STATE, 
 		FLOAT_STATE,
+		SHORT_STATE,
+		CHAR_STATE,
 		CLASS_STATE, 
 		WAIT_OPEN_SCOBAL, //фигурный скобки
 		WAIT_CLOSE_SCOBAL, 
@@ -95,7 +97,7 @@ class Machine
 		ciclCheck(c, FOR_LENGHT, word);	
 	}
 	
-  	void  checkOnIf(char c) {
+  	void checkOnIf(char c) {
 
 		if(c == 'i' &&  lenght_current_word == 0) {
 			lenght_current_word ++;
@@ -202,6 +204,12 @@ class Machine
 		char word[]  = "short";
 		varCheck(c, SHORT_LENGHT, word);
 	}
+	
+	void checkOnChar(char c) {
+		char word[] = "char";
+		varCheck(c, CHAR_LENGHT, word);
+	}
+	
 // ======================= END CHECK VARIABLE OR FUNCTION ==================	
 	
 // ========================== END CHECK ================================
@@ -237,10 +245,32 @@ public:
 			case START_STATE: 
 				if (c == 'f' ) {state = FOR_STATE; checkOnFor(c); break;}
 				if (c == 'i' ) {state = IF_STATE; checkOnIf(c); break;}
+				if (c == 'w' ) {state = WHILE_STATE; checkOnWhile(c); break;}
+				if (c == 'c') {state = CHAR_STATE; checkOnChar(c);break;}
+				if (c == 's' ) {state = SHORT_STATE; checkOnShort(c);break;}
+				if (c == 'd' ) {state = DOUBLE_STATE; checkOnDouble(c); break;
 				break;
 			case FOR_STATE: 
 				checkOnFor(c);
 				break;
+			case IF_STATE:
+			    checkOnIf(c);
+			    break;
+			case WHILE_STATE:
+			    checkOnWhile(c);
+			    break;
+			case INT_STATE:
+			    checkOnInt(c);
+			    break;
+			case VOID_STATE:
+			    checkOnVoid(c);
+			    break;
+			case DOUBLE_STATE:
+			    checkOnDouble(c);
+			    break;
+			case SHORT_STATE:
+			    checkOnShort(c);
+			    break;
 			case WAIT_CLOSE_CIRC_SCOBAL:
 				if(c == ')') state = WAIT_OPEN_SCOBAL;
 				break;
