@@ -65,6 +65,7 @@ class Machine
 	char before_be_space;
 	enum {BEFORE_SPACE};
 	int state_help;
+	int count_functions;
 	
 // =============== BEGIN CHECKS ========================================
 
@@ -82,6 +83,8 @@ class Machine
 			if(lenght_current_word == size) {
 				if (c == ' ') {
 					state = WAIT_OPEN_CIRC_SCOBAL;				
+				} else if(c=='('){
+					state = WAIT_CLOSE_CIRC_SCOBAL;
 				} else {
 					state = START_STATE;
 				}
@@ -91,41 +94,55 @@ class Machine
 		}
 	}
 
-	void checkOnFor(char c)
-	{
-		char word []  = "for";
-		ciclCheck(c, FOR_LENGHT, word);	
+	void checkOnFor(char c)	{	
+		if (c == 'f' && !lenght_current_word) {
+			lenght_current_word++;
+			return;
+		}
+		if(c == 'o' && lenght_current_word == 1) {
+			lenght_current_word++;
+			return;
+		}		
+		if(c == 'r' && lenght_current_word == 2) {
+			state = WAIT_OPEN_CIRC_SCOBAL;
+			lenght_current_word = 0;
+			return;
+		}
+		if(c == 'l' && lenght_current_word == 1) {
+			state = FLOAT_STATE;
+			lenght_current_word++;
+			return;
+		}
+		//надо обработать f o r ()
+		if(lenght_current_word >= FOR_LENGHT) {
+			if(c == ' ' ) return;
+			if(c == '(') {
+				state = WAIT_CLOSE_CIRC_SCOBAL;
+				lenght_current_word = 0;
+				return;
+			}
+		}
+		state = START_STATE;
+		lenght_current_word = 0;
 	}
 	
   	void checkOnIf(char c) {
-
 		if(c == 'i' &&  lenght_current_word == 0) {
 			lenght_current_word ++;
 			return;
 		}
-		
+		if(c == 'f' && lenght_current_word == 1) {
+			state = WAIT_OPEN_CIRC_SCOBAL;
+			lenght_current_word = 0;
+			return;
+		}
 		if(c ==  'n' && lenght_current_word == 1) {
 			state = INT_STATE;
 			lenght_current_word++;
 			return;
 		}
-		
-		if(c == 'f' && lenght_current_word == 1) {
-			lenght_current_word ++;
-			return;
-		}
- 		  if (lenght_current_word == IF_LENGHT && (c != ' ' || c != '(') ) {
-			 lenght_current_word = 0;
-			 state = START_STATE; //maybe oldstate
-			 return;
-		  } else {
-			 if (c == ' ') {
-			 	state = WAIT_OPEN_CIRC_SCOBAL;
-			 	state_help = BEFORE_SPACE;
-			 }
-			 if (c == '(') state = WAIT_CLOSE_CIRC_SCOBAL;	
-			 return;
-		  }
+		state = START_STATE;
+		lenght_current_word = 0;
 	}
 	
 	void checkOnWhile(char c) {
@@ -134,7 +151,7 @@ class Machine
 	}
 	
 // ======================= CHECK VARIABLE OR FUNCTION ==================	
-
+   //последний раз остановился здесь. Не срабатывает проверка на функцию (объявление)
 	void checkOnInt(char c ) {
 		char word[] = "int";
 		if(lenght_current_word < INT_LENGHT) {
@@ -190,7 +207,7 @@ class Machine
 		varCheck(c, VOID_LENGHT, word);
 	}
 	
-	void checkOnFlaot(char c) {
+	void checkOnFloat(char c) {
 		char word[]  = "float";
 		varCheck(c, FLOAT_LENGHT, word);
 	}
@@ -210,6 +227,19 @@ class Machine
 		varCheck(c, CHAR_LENGHT, word);
 	}
 	
+	void checkOnVeriableOrFunction(char c) {
+		if (c == ' ') return;
+		if (c == '=' || c == ';') {
+			state = START_STATE; //это объявление переменной
+			return;
+		}
+		if(c == '(') {
+			state = WAIT_CLOSE_CIRC_SCOBAL; //объявление функции
+			count_functions++;
+			return;
+		}
+	}
+	
 // ======================= END CHECK VARIABLE OR FUNCTION ==================	
 	
 // ========================== END CHECK ================================
@@ -221,7 +251,7 @@ class Machine
 	
 	void pushCloseScobal()
 	{
-		nestingScobals.push_back('{');
+		nestingScobals.push_back('}');
 	}
 	
 	void pushScobals()
@@ -234,7 +264,7 @@ public:
 
 	Machine() : maxNestingLevel(0), 
 				state(START_STATE), lenght_current_word(0),
-				before_be_space(true) 
+				before_be_space(true), count_functions(0)
 	{
 	}
 
@@ -248,7 +278,7 @@ public:
 				if (c == 'w' ) {state = WHILE_STATE; checkOnWhile(c); break;}
 				if (c == 'c') {state = CHAR_STATE; checkOnChar(c);break;}
 				if (c == 's' ) {state = SHORT_STATE; checkOnShort(c);break;}
-				if (c == 'd' ) {state = DOUBLE_STATE; checkOnDouble(c); break;
+				if (c == 'd' ) {state = DOUBLE_STATE; checkOnDouble(c); break;}
 				break;
 			case FOR_STATE: 
 				checkOnFor(c);
@@ -259,41 +289,72 @@ public:
 			case WHILE_STATE:
 			    checkOnWhile(c);
 			    break;
+			case CHAR_STATE:
+				checkOnChar(c);
+			case SHORT_STATE:
+			    checkOnShort(c);
+			    break;
 			case INT_STATE:
 			    checkOnInt(c);
 			    break;
 			case VOID_STATE:
 			    checkOnVoid(c);
 			    break;
+			case FLOAT_STATE:
+				checkOnFloat(c);
 			case DOUBLE_STATE:
 			    checkOnDouble(c);
 			    break;
-			case SHORT_STATE:
-			    checkOnShort(c);
-			    break;
+			case WAIT_OPEN_CIRC_SCOBAL:
+				if(c == '(') {
+					state = WAIT_CLOSE_CIRC_SCOBAL;
+				}
+				break;
 			case WAIT_CLOSE_CIRC_SCOBAL:
 				if(c == ')') state = WAIT_OPEN_SCOBAL;
 				break;
 			case WAIT_OPEN_SCOBAL:
 				if(c == ' ') break; //встретили пробел ничего не делаем. 
-				//обработка типа: for(int a = 0; a < n; a++); 
-				if (c == ';') {pushScobals(); state = START_STATE; break;}
-				// обработка типа for(...) 
-				//                    while(...) ...
-				// и               for (...) {
-				//                     while(...) { ...
-				pushOpenScobal();
-				state = WAIT_CLOSE_SCOBAL; 
+				if (c == '{') {
+					pushOpenScobal();
+					state = WAIT_CLOSE_SCOBAL;
+				} else {
+					if(c == ';') {
+							pushScobals();
+							state = START_STATE;
+							break;
+						}
+				}							
 				break;
-				
+			case WAIT_CLOSE_SCOBAL:
+			    if(c == '}') {
+					pushCloseScobal();
+					state = START_STATE;
+					break;
+				}
+				if(c != ' ') {
+					state = START_STATE;
+					processState(c);
+					break;
+				}
+			case WAIT_VARIABLE_OR_NAME_FUNCTION:
+				checkOnVeriableOrFunction(c);
+				break;
+			default: 
+			    if(c == '{') {
+					pushOpenScobal();
+				}
+			    if(c == '}') {
+					pushCloseScobal();
+				}
 		}
+		
 	}
 	
 	void postProcessing()
 	{
 		int currentNestingLevel = 0;
 		int max = 0;
-		//stupid way
 		for(unsigned int i = 0; i < nestingScobals.size(); i++) {
 			if(nestingScobals.at(i) == '{') currentNestingLevel++;
 			if(max < currentNestingLevel) max = currentNestingLevel;
@@ -302,29 +363,40 @@ public:
 		this -> maxNestingLevel = max;
 	}
 	
-	int getMaxNestingLevel()
-	{
+	void printScobals() {
+		for(unsigned int i = 0; i < nestingScobals.size(); i++) {
+			std::cout << nestingScobals.at(i) << " ";
+		}
+		std::cout<<std::endl;
+	}
+	
+	int getMaxNestingLevel() {
 		return maxNestingLevel;
 	}
+	
+	int getCountFunction() {
+		return count_functions;
+	}
+	
 };
 
 class Processing
 {
 	Machine machine;
 public:
-	void processData()
-	{
+	void processData()	{
 		char c;
 		while((c = std::cin.get())!=EOF)
 		{
 			machine.processState(c);
 		}
+		machine.printScobals();
 		machine.postProcessing();
 	}
 
-	void printStatistic()
-	{
-		std::cout << "Max nesting level: " << machine.getMaxNestingLevel();
+	void printStatistic() {
+		std::cout << "Max nesting level: " << machine.getMaxNestingLevel() << std::endl;
+		std::cout << "Count function: " << machine.getCountFunction() << std::endl;
 	}
 
 };
